@@ -1,21 +1,10 @@
-
-import 'package:bhaashini/res/constants/apiConstants.dart';
 import 'package:bhaashini/utils/errorhandlingUtils.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 
 class BaseApiClient {
-  final Dio _client = Dio(
-    BaseOptions(
-      headers: {
-        "Authorization":
-            "fRC3IepTDktqNBREnwcvCCNzs1AakAaQHjbDFkE7SUX3MizaCE0RbIDPPXCeELHK"
-      },
-      //baseUrl: UrlConstants.nzp_live_baseUrl,
-      //baseUrl: UrlConstants.nzp_uat_baseUrl,
-      baseUrl: ApiConstants.NMT_BASE_URL,
-    ),
-  )..interceptors.addAll([
+  final Dio _client = Dio()
+    ..interceptors.addAll([
       CustomInterceptor(),
       LoggingInterceptor(),
       InterceptorsWrapper(
@@ -66,12 +55,21 @@ class BaseApiClient {
   }
 
   Future<dynamic> postCall(
-      BuildContext context, String url, Map<String, dynamic> payload) async {
+      BuildContext context,
+      String url,
+      Map<String, dynamic> payload,
+      Map<String, dynamic> headers,
+      Function(bool value) setLoading) async {
     try {
-      final response = await _client.post(url, data: payload);
+      final response = await _client.post(
+        url,
+        data: payload,
+        options: Options(headers: headers),
+      );
       print("response is@@@@@@@@@@@@@@@@@ ${response.data}");
       return response;
     } on DioException catch (error) {
+      setLoading(false);
       if (error.type == DioExceptionType.connectionTimeout) {
         // Handle connection timeout error
         String errorMessage = "Connection timeout occurred.";
@@ -87,6 +85,7 @@ class BaseApiClient {
       }
       return null;
     } catch (error) {
+      setLoading(false);
       // Handle other errors
       String errorMessage = ErrorHandlingUtils.handleError(error, context);
       ErrorHandlingUtils().showErrorDialog(context, errorMessage);

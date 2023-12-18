@@ -1,6 +1,6 @@
-
 import 'package:bhaashini/res/routes/apppages.dart';
 import 'package:bhaashini/viewModel/dashboard_view_model.dart';
+import 'package:bhaashini/viewModel/text_translation_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -19,6 +19,9 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(
           create: (context) => DashboardViewModel(),
+        ),
+         ChangeNotifierProvider(
+          create: (context) => TextTranslationViewModel(),
         ),
       ],
       child: MaterialApp(

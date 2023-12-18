@@ -1,9 +1,7 @@
 import 'package:bhaashini/res/constants/color_constants.dart';
 import 'package:bhaashini/res/constants/image_constants.dart';
 import 'package:bhaashini/res/routes/approutes.dart';
-import 'package:bhaashini/viewModel/dashboard_view_model.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
 class Dashboard extends StatefulWidget {
   Dashboard({super.key});
@@ -17,7 +15,6 @@ class _DashboardState extends State<Dashboard> {
   // String selectedValue = 'English';
   @override
   Widget build(BuildContext context) {
-    final dashboardProvider = Provider.of<DashboardViewModel>(context);
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,

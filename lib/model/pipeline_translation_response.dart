@@ -1,18 +1,18 @@
-class PipeLineWithConfigResponse {
+class PipeLineTranslationResponse {
   List<Languages>? languages;
   List<PipelineResponseConfig>? pipelineResponseConfig;
   String? feedbackUrl;
   PipelineInferenceAPIEndPoint? pipelineInferenceAPIEndPoint;
   PipelineInferenceAPIEndPoint? pipelineInferenceSocketEndPoint;
 
-  PipeLineWithConfigResponse(
+  PipeLineTranslationResponse(
       {this.languages,
       this.pipelineResponseConfig,
       this.feedbackUrl,
       this.pipelineInferenceAPIEndPoint,
       this.pipelineInferenceSocketEndPoint});
 
-  PipeLineWithConfigResponse.fromJson(Map<String, dynamic> json) {
+  PipeLineTranslationResponse.fromJson(Map<String, dynamic> json) {
     if (json['languages'] != null) {
       languages = <Languages>[];
       json['languages'].forEach((v) {
@@ -108,15 +108,8 @@ class Config {
   String? serviceId;
   String? modelId;
   Language? language;
-  List<String>? domain;
-  List<String>? supportedVoices;
 
-  Config(
-      {this.serviceId,
-      this.modelId,
-      this.language,
-      this.domain,
-      this.supportedVoices});
+  Config({this.serviceId, this.modelId, this.language});
 
   Config.fromJson(Map<String, dynamic> json) {
     serviceId = json['serviceId'];
@@ -124,8 +117,6 @@ class Config {
     language = json['language'] != null
         ? new Language.fromJson(json['language'])
         : null;
-    domain = json['domain'].cast<String>();
-    supportedVoices = json['supportedVoices'].cast<String>();
   }
 
   Map<String, dynamic> toJson() {
@@ -135,8 +126,6 @@ class Config {
     if (this.language != null) {
       data['language'] = this.language!.toJson();
     }
-    data['domain'] = this.domain;
-    data['supportedVoices'] = this.supportedVoices;
     return data;
   }
 }

@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:bhaashini/res/components/SingleButtonAlert.dart';
+import 'package:bhaashini/res/constants/image_constants.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 
@@ -13,12 +15,14 @@ class ErrorHandlingUtils {
           final jsonData = json.encode(responseBody);
           msg = getErrorMessage(jsonData);
         }
+      } else if (e.response?.statusCode == 500) {
+        msg = "Error:response not received";
       } else if (e.type == DioExceptionType.connectionTimeout) {
         msg = "Connection timed out";
       } else if (e.type == DioExceptionType.receiveTimeout) {
         msg = "Receive timeout occurred.";
       } else {
-        msg = "Server not responding: ${e.message}";
+        msg = "Server not responding: ${e.response?.statusMessage}";
       }
     } else if (e is SocketException) {
       msg = "Something went wrong: ${e.message}";
@@ -38,12 +42,14 @@ class ErrorHandlingUtils {
   }
 
   showErrorDialog(BuildContext context, String errorMessage) {
-    return showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return Text("");
+    return SingleButtonAlert.showAlertDialog(
+      context,
+      message: errorMessage,
+      Title: "",
+      onpressedOk: () {
+        Navigator.pop(context);
       },
+      image: ImageConstants.error,
     );
   }
 }

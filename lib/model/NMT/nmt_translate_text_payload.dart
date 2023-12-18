@@ -1,18 +1,18 @@
-class TranslateTextPayload {
-  List<PipelineTasks>? pipelineTasks;
-  InputData? inputData;
+class NMTTranslateTextPayload {
+  List<NMTPipelineTasks>? pipelineTasks;
+  NMTInputData? inputData;
 
-  TranslateTextPayload({this.pipelineTasks, this.inputData});
+  NMTTranslateTextPayload({this.pipelineTasks, this.inputData});
 
-  TranslateTextPayload.fromJson(Map<String, dynamic> json) {
+  NMTTranslateTextPayload.fromJson(Map<String, dynamic> json) {
     if (json['pipelineTasks'] != null) {
-      pipelineTasks = <PipelineTasks>[];
+      pipelineTasks = <NMTPipelineTasks>[];
       json['pipelineTasks'].forEach((v) {
-        pipelineTasks!.add(new PipelineTasks.fromJson(v));
+        pipelineTasks!.add(new NMTPipelineTasks.fromJson(v));
       });
     }
     inputData = json['inputData'] != null
-        ? new InputData.fromJson(json['inputData'])
+        ? new NMTInputData.fromJson(json['inputData'])
         : null;
   }
 
@@ -29,16 +29,16 @@ class TranslateTextPayload {
   }
 }
 
-class PipelineTasks {
+class NMTPipelineTasks {
   String? taskType;
-  Config? config;
+  NMTConfig? config;
 
-  PipelineTasks({this.taskType, this.config});
+  NMTPipelineTasks({this.taskType, this.config});
 
-  PipelineTasks.fromJson(Map<String, dynamic> json) {
+  NMTPipelineTasks.fromJson(Map<String, dynamic> json) {
     taskType = json['taskType'];
     config =
-        json['config'] != null ? new Config.fromJson(json['config']) : null;
+        json['config'] != null ? new NMTConfig.fromJson(json['config']) : null;
   }
 
   Map<String, dynamic> toJson() {
@@ -51,15 +51,15 @@ class PipelineTasks {
   }
 }
 
-class Config {
-  Language? language;
+class NMTConfig {
+  NMTLanguage? language;
   String? serviceId;
 
-  Config({this.language, this.serviceId});
+  NMTConfig({this.language, this.serviceId});
 
-  Config.fromJson(Map<String, dynamic> json) {
+  NMTConfig.fromJson(Map<String, dynamic> json) {
     language = json['language'] != null
-        ? new Language.fromJson(json['language'])
+        ? new NMTLanguage.fromJson(json['language'])
         : null;
     serviceId = json['serviceId'];
   }
@@ -74,13 +74,13 @@ class Config {
   }
 }
 
-class Language {
+class NMTLanguage {
   String? sourceLanguage;
   String? targetLanguage;
 
-  Language({this.sourceLanguage, this.targetLanguage});
+  NMTLanguage({this.sourceLanguage, this.targetLanguage});
 
-  Language.fromJson(Map<String, dynamic> json) {
+  NMTLanguage.fromJson(Map<String, dynamic> json) {
     sourceLanguage = json['sourceLanguage'];
     targetLanguage = json['targetLanguage'];
   }
@@ -93,16 +93,16 @@ class Language {
   }
 }
 
-class InputData {
-  List<Input>? input;
+class NMTInputData {
+  List<NMTInput>? input;
 
-  InputData({this.input});
+  NMTInputData({this.input});
 
-  InputData.fromJson(Map<String, dynamic> json) {
+  NMTInputData.fromJson(Map<String, dynamic> json) {
     if (json['input'] != null) {
-      input = <Input>[];
+      input = <NMTInput>[];
       json['input'].forEach((v) {
-        input!.add(new Input.fromJson(v));
+        input!.add(new NMTInput.fromJson(v));
       });
     }
   }
@@ -116,12 +116,12 @@ class InputData {
   }
 }
 
-class Input {
+class NMTInput {
   String? source;
 
-  Input({this.source});
+  NMTInput({this.source});
 
-  Input.fromJson(Map<String, dynamic> json) {
+  NMTInput.fromJson(Map<String, dynamic> json) {
     source = json['source'];
   }
 
