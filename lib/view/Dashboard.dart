@@ -125,30 +125,37 @@ class _DashboardState extends State<Dashboard> {
                       ),
                   SizedBox(width: 16.0),
                   Expanded(
-                      child: SizedBox(
-                    height: 170,
-                    child: Card(
-                      elevation: 4.0,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Image.asset(
-                            ImageConstants.voice, // Replace with your image URL
-                            height: 100,
-                            // Adjust the height as needed
-                            width: 100, // Take full width
-                            fit: BoxFit.cover, // Adjust the fit as needed
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16.0, vertical: 4.0),
-                            child: Text(
-                              'Voice',
-                              style: TextStyle(
-                                  fontSize: 24.0, fontWeight: FontWeight.bold),
+                      child: GestureDetector(
+                    onTap: () {
+                      Navigator.pushNamed(context, AppRoutes.voiceTranslation);
+                    },
+                    child: SizedBox(
+                      height: 170,
+                      child: Card(
+                        elevation: 4.0,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Image.asset(
+                              ImageConstants
+                                  .voice, // Replace with your image URL
+                              height: 100,
+                              // Adjust the height as needed
+                              width: 100, // Take full width
+                              fit: BoxFit.cover, // Adjust the fit as needed
                             ),
-                          ),
-                        ],
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16.0, vertical: 4.0),
+                              child: Text(
+                                'Voice',
+                                style: TextStyle(
+                                    fontSize: 24.0,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   )

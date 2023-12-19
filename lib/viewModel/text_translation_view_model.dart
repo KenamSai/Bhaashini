@@ -1,7 +1,7 @@
 import 'package:bhaashini/model/NMT/nmt_translate_text_payload.dart';
 import 'package:bhaashini/model/NMT/translate_text_response.dart';
-import 'package:bhaashini/model/pipeline_payload.dart';
-import 'package:bhaashini/model/pipeline_translation_response.dart';
+import 'package:bhaashini/model/PipeLineWithOutConfig/pipeline_payload.dart';
+import 'package:bhaashini/model/PipeLineWithOutConfig/pipeline_translation_response.dart';
 import 'package:bhaashini/repository/pipeline_without_config_repo.dart';
 import 'package:bhaashini/repository/translate_text_repository.dart';
 import 'package:bhaashini/res/components/SingleButtonAlert.dart';
