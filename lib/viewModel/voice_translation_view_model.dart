@@ -1,12 +1,12 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:bhaashini/model/ASR+NMT+TTS/voice_translation_payload.dart';
 import 'package:bhaashini/model/ASR+NMT+TTS/voice_translation_response.dart';
-import 'package:bhaashini/model/NMT/nmt_translate_text_payload.dart';
 import 'package:bhaashini/model/PipeLineWithOutConfig/pipeline_payload.dart';
 import 'package:bhaashini/model/PipeLineWithOutConfig/pipeline_translation_response.dart';
 import 'package:bhaashini/repository/pipeline_without_config_repo.dart';
-import 'package:bhaashini/repository/translate_text_repository.dart';
 import 'package:bhaashini/repository/translate_voice_repository.dart';
 import 'package:bhaashini/res/components/SingleButtonAlert.dart';
 import 'package:bhaashini/res/constants/apiConstants.dart';
@@ -14,6 +14,7 @@ import 'package:bhaashini/res/constants/image_constants.dart';
 import 'package:bhaashini/utils/internetcheck.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
@@ -30,78 +31,20 @@ class VoiceTranslationViewModel with ChangeNotifier {
   PipeLineTranslationResponse? pipeLineResponse;
   bool isLoading = false;
   String translatedText = "";
-
-  TranslateText(BuildContext context, String text) async {
-    if (text.trim().isEmpty) {
-      SingleButtonAlert.showAlertDialog(context,
-          message: "Text cannot be empty", Title: "", onpressedOk: () {
-        Navigator.pop(context);
-      }, image: ImageConstants.error);
-    } else if (selectedSourceLanguage == null) {
-      SingleButtonAlert.showAlertDialog(context,
-          message: "Please Select Source Language", Title: "", onpressedOk: () {
-        Navigator.pop(context);
-      }, image: ImageConstants.error);
-    } else if (selectedTargetLanguage == null) {
-      SingleButtonAlert.showAlertDialog(context,
-          message: "Please Select Target Language", Title: "", onpressedOk: () {
-        Navigator.pop(context);
-      }, image: ImageConstants.error);
-    } else {
-      TranslateTextRepository translateTextRepository =
-          TranslateTextRepository();
-      NMTTranslateTextPayload payload = NMTTranslateTextPayload(
-        pipelineTasks: [
-          NMTPipelineTasks(
-              config: NMTConfig(
-                  language: NMTLanguage(
-                      sourceLanguage: selectedSourceLanguage,
-                      targetLanguage: selectedTargetLanguage),
-                  serviceId: "ai4bharat/indictrans-v2-all-gpu--t4"),
-              taskType: "translation"),
-        ],
-        inputData: NMTInputData(input: [
-          NMTInput(
-            source: text.trim(),
-          )
-        ]),
-      );
-      print("payload########################## ${payload.toJson()}");
-      if (await internetCheck()) {
-        setLoading(true);
-        Response<dynamic>? response =
-            await translateTextRepository.translateTextRepo(
-                "${ApiConstants.NMT_BASE_URL}${ApiConstants.NMT_END_URL}",
-                context,
-                payload,
-                setLoading);
-        if (response?.statusCode == 200) {
-          setLoading(false);
-          voiceResponse = VoiceTranslationResponse.fromJson(
-              response?.data as Map<String, dynamic>);
-          // translatedText =
-          //     trnsresponse?.pipelineResponse?[0].output?[0].target ?? "";
-
-          notifyListeners();
-        }
-      } else {
-        setLoading(false);
-        SingleButtonAlert.showAlertDialog(context,
-            message: "Please check your internet connection",
-            Title: "", onpressedOk: () {
-          Navigator.pop(context);
-        }, image: ImageConstants.error);
-      }
-    }
-  }
+  String sourceText = "";
+  List<int>? byteList;
+  String? asrServiceId;
+  String? nmtServiceId;
+  String? ttsServiceId;
 
   clearData() {
     print("clear data");
-
     selectedSourceLanguage = null;
     selectedTargetLanguage = null;
     sourceLanguages?.clear();
     targetLanguages?.clear();
+    sourceText = "";
+    translatedText = "";
     isRecording = false;
     notifyListeners();
   }
@@ -158,6 +101,7 @@ class VoiceTranslationViewModel with ChangeNotifier {
   setSelectedSourceLanguage(String s) {
     selectedSourceLanguage = s;
     selectedTargetLanguage = null;
+    notifyListeners();
     getTargetLanguage();
   }
 
@@ -172,6 +116,7 @@ class VoiceTranslationViewModel with ChangeNotifier {
   setSelectedTargetLanguage(String s) {
     selectedTargetLanguage = s;
     notifyListeners();
+    getServicId();
   }
 
   setDefaultLanguage() {
@@ -185,7 +130,8 @@ class VoiceTranslationViewModel with ChangeNotifier {
 
   AudioRecorder record = AudioRecorder();
   onMicTap(BuildContext context) async {
-    recordingStatus();
+    //placed here to avoid multiple clicks*
+    // recordingStatus();
     if (selectedSourceLanguage == null || selectedTargetLanguage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -203,7 +149,7 @@ class VoiceTranslationViewModel with ChangeNotifier {
 
         Directory directory = Directory('${appDocDir?.path}record');
 
-        print("appDocDir@@@@@@@@@ ${directory.path}");
+        // print("appDocDir@@@@@@@@@ ${directory.path}");
         if (!(await directory.exists())) {
           await directory.create(recursive: true);
         } else {
@@ -212,9 +158,10 @@ class VoiceTranslationViewModel with ChangeNotifier {
 
         // Check and request permission if needed
         if (await record.hasPermission()) {
-          print(
-              "hello ************* ${directory.path} isRecording $isRecording");
+          recordingStatus();
+          print("hello ************* isRecording $isRecording");
           // Start recording to file
+
           if (isRecording) {
             await record.start(const RecordConfig(encoder: AudioEncoder.wav),
                 path: '${directory.path}/$_fileName');
@@ -234,25 +181,22 @@ class VoiceTranslationViewModel with ChangeNotifier {
   recordingStatus() async {
     if (isRecording) {
       isRecording = false;
-      notifyListeners();
     } else {
       isRecording = true;
-      notifyListeners();
     }
+    notifyListeners();
   }
 
   stopRecording(BuildContext context) async {
     print("recording stopped");
     final path = await record.stop();
+    notifyListeners();
     print("path^^^^^^^^^^^^^^^ ${path}");
     // Check if the file exists
     if (File(path ?? "").existsSync()) {
       print('File permissions: ${await File(path ?? "").stat()}');
       String? base64 = await convertAudioToBase64('$path');
-      notifyListeners();
       await TranslateSpeech(context, base64 ?? "");
-      // Read the file
-      // ...
     } else {
       print('File does not exist at the specified path');
     }
@@ -266,7 +210,7 @@ class VoiceTranslationViewModel with ChangeNotifier {
 
       // Encode bytes to Base64
       String base64String = base64Encode(bytes);
-      debugPrint("base64String $base64String");
+      debugPrint("base64String $base64String   @@");
       return base64String;
     } catch (e) {
       print('Error converting audio to Base64: $e');
@@ -275,6 +219,8 @@ class VoiceTranslationViewModel with ChangeNotifier {
   }
 
   TranslateSpeech(BuildContext context, String base64) async {
+    print(
+        "asr@@@@ $asrServiceId    nmt@@@@ $nmtServiceId   tts@@@@ $ttsServiceId");
     TranslateVoiceRepository translateVoiceRepository =
         TranslateVoiceRepository();
     VoiceTranslationPayload payload = VoiceTranslationPayload(
@@ -284,9 +230,9 @@ class VoiceTranslationViewModel with ChangeNotifier {
           config: VoiceConfig(
               language:
                   VoiceLanguage(sourceLanguage: "$selectedSourceLanguage"),
-              serviceId: "ai4bharat/whisper-medium-en--gpu--t4",
+              serviceId: "$asrServiceId",
               samplingRate: 16000,
-              audioFormat: "WAV"),
+              audioFormat: "wav"),
         ),
         VoicePipelineTasks(
           taskType: "translation",
@@ -294,14 +240,14 @@ class VoiceTranslationViewModel with ChangeNotifier {
               language: VoiceLanguage(
                   sourceLanguage: "$selectedSourceLanguage",
                   targetLanguage: "$selectedTargetLanguage"),
-              serviceId: "ai4bharat/indictrans-v2-all-gpu--t4"),
+              serviceId: "$nmtServiceId"),
         ),
         VoicePipelineTasks(
           taskType: "tts",
           config: VoiceConfig(
               language:
                   VoiceLanguage(sourceLanguage: "$selectedTargetLanguage"),
-              serviceId: "ai4bharat/indic-tts-coqui-dravidian-gpu--t4",
+              serviceId: "$ttsServiceId",
               gender: "male",
               samplingRate: 8000),
         ),
@@ -322,11 +268,21 @@ class VoiceTranslationViewModel with ChangeNotifier {
               payload,
               setLoading);
       if (response?.statusCode == 200) {
+        print("response%%%%%%%%%%%%%%%%% ${response}");
         setLoading(false);
         voiceResponse = VoiceTranslationResponse.fromJson(
             response?.data as Map<String, dynamic>);
+        print("voiceResponse ${voiceResponse?.toJson()}");
+        sourceText =
+            voiceResponse?.pipelineResponse?[0].output?[0].source ?? "";
         translatedText =
-            voiceResponse?.pipelineResponse?[0].output?[0].target ?? "";
+            voiceResponse?.pipelineResponse?[1].output?[0].target ?? "";
+        String translatedTextBase64 =
+            voiceResponse?.pipelineResponse?[2].audio?[0].audioContent ?? "";
+        Uint8List voiceBytes = base64Decode(translatedTextBase64);
+        print("voiceBytes####################### $voiceBytes");
+        // Convert Uint8List to List<int>
+        byteList = voiceBytes;
 
         notifyListeners();
       }
@@ -338,5 +294,71 @@ class VoiceTranslationViewModel with ChangeNotifier {
         Navigator.pop(context);
       }, image: ImageConstants.error);
     }
+  }
+
+  playAudio(BuildContext context) async {
+    final player = AudioPlayer();
+    try {
+      print("byteList $byteList");
+      await player.setAudioSource(
+        MyCustomSource(byteList ?? []),
+      );
+    } catch (e) {
+      print('Error setting audio source: $e');
+    }
+
+    await player.play();
+  }
+
+  getServicId() {
+    print("@@@@@@@@@@@@@@@@@@@@@@@");
+    if (pipeLineResponse?.pipelineResponseConfig?[0].taskType == "asr") {
+      asrServiceId = pipeLineResponse?.pipelineResponseConfig?[0].config
+          ?.firstWhere((element) =>
+              element.language?.sourceLanguage == selectedSourceLanguage)
+          .serviceId;
+    }
+    if (pipeLineResponse?.pipelineResponseConfig?[1].taskType ==
+        "translation") {
+      nmtServiceId = pipeLineResponse?.pipelineResponseConfig?[1].config
+          ?.firstWhere((element) =>
+              element.language?.sourceLanguage == selectedSourceLanguage)
+          .serviceId;
+    }
+    if (pipeLineResponse?.pipelineResponseConfig?[2].taskType == "tts") {
+      ttsServiceId = pipeLineResponse?.pipelineResponseConfig?[2].config
+          ?.firstWhere((element) =>
+              element.language?.sourceLanguage == selectedTargetLanguage)
+          .serviceId;
+    }
+    notifyListeners();
+  }
+}
+
+// Feed your own stream of bytes into the player
+class MyCustomSource extends StreamAudioSource {
+  final List<int> bytes;
+  MyCustomSource(this.bytes);
+
+  @override
+  Future<StreamAudioResponse> request([int? start, int? end]) async {
+    print("@@@@@@@@@@@@@@$bytes");
+    start ??= 0;
+    end ??= bytes.length;
+    // Create a StreamController to provide the audio data
+    final controller = StreamController<List<int>>();
+
+    // Add the sublist of bytes to the stream
+    controller.add(bytes.sublist(start, end));
+
+    // Close the stream after the data has been provided
+    controller.close();
+    return StreamAudioResponse(
+      sourceLength: bytes.length,
+      contentLength: end - start,
+      offset: start,
+      stream: controller.stream,
+      contentType: 'audio/wav',
+    );
   }
 }

@@ -6,6 +6,7 @@ import 'package:bhaashini/res/routes/approutes.dart';
 import 'package:bhaashini/viewModel/voice_translation_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 
 class VoiceTranslation extends StatefulWidget {
@@ -248,42 +249,16 @@ class _VoiceTranslationState extends State<VoiceTranslation> {
                               padding:
                                   const EdgeInsets.symmetric(horizontal: 8.0),
                               child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Expanded(
-                                    child: TextField(
-                                      textInputAction: TextInputAction.done,
-                                      controller: textEditingController,
-                                      style: TextStyle(fontSize: 20),
-                                      maxLines: null,
-                                      decoration: InputDecoration(
-                                        hintText: 'Enter your text here',
-                                        hintStyle: TextStyle(
-                                            color: Colors.grey,
-                                            fontWeight: FontWeight.w600,
-                                            fontSize: 18),
-                                        border: InputBorder.none,
-                                      ),
-                                    ),
-                                  ),
-                                  Align(
-                                    alignment: Alignment.bottomRight,
-                                    child: ElevatedButton(
-                                      style: ButtonStyle(
-                                        backgroundColor:
-                                            MaterialStateProperty.all<Color>(
-                                          Colors.green,
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: SingleChildScrollView(
+                                        child: Text(
+                                          voiceProvider.sourceText,
+                                          style: TextStyle(fontSize: 20),
                                         ),
-                                      ),
-                                      onPressed: () {
-                                        FocusScope.of(context).unfocus();
-                                        voiceProvider.TranslateText(context,
-                                            textEditingController.text);
-                                      },
-                                      child: Text(
-                                        'Translate',
-                                        style: TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w600),
                                       ),
                                     ),
                                   ),
@@ -319,33 +294,56 @@ class _VoiceTranslationState extends State<VoiceTranslation> {
                                   ),
                                 ),
                               ),
-                              Align(
-                                alignment: Alignment.bottomLeft,
-                                child: IconButton(
-                                  onPressed: voiceProvider.translatedText == ""
-                                      ? null
-                                      : () {
-                                          Clipboard.setData(
-                                            new ClipboardData(
-                                                text: voiceProvider
-                                                    .translatedText),
-                                          ).then((value) {
-                                            ScaffoldMessenger.of(context)
-                                                .showSnackBar(
-                                              SnackBar(
-                                                content: Text(
-                                                    'Copied to your clipboard !'),
-                                              ),
-                                            );
-                                          });
-                                        },
-                                  icon: Icon(
-                                    Icons.copy,
-                                    color: voiceProvider.translatedText == ""
-                                        ? Colors.grey
-                                        : Colors.black,
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  IconButton(
+                                    onPressed:
+                                        voiceProvider.translatedText == ""
+                                            ? null
+                                            : () {
+                                                Clipboard.setData(
+                                                  new ClipboardData(
+                                                      text: voiceProvider
+                                                          .translatedText),
+                                                ).then((value) {
+                                                  ScaffoldMessenger.of(context)
+                                                      .showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(
+                                                          'Copied to your clipboard !'),
+                                                    ),
+                                                  );
+                                                });
+                                              },
+                                    icon: Icon(
+                                      Icons.copy,
+                                      color: voiceProvider.translatedText == ""
+                                          ? Colors.grey
+                                          : Colors.black,
+                                    ),
                                   ),
-                                ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(right: 10.0),
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        voiceProvider.playAudio(context);
+                                      },
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(50),
+                                          color: Colors.orange.shade800,
+                                        ),
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Icon(Icons.volume_up_outlined),
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                ],
                               ),
                             ],
                           ),
@@ -368,13 +366,20 @@ class _VoiceTranslationState extends State<VoiceTranslation> {
                               borderRadius: BorderRadius.circular(50),
                               color: Colors.orange.shade800,
                             ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Icon(
-                                Icons.mic,
-                                color: Colors.black,
-                                size: 40,
-                              ),
+                            child: Stack(
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Icon(
+                                    Icons.mic,
+                                    color: Colors.black,
+                                    size: 40,
+                                  ),
+                                ),
+                                if (voiceProvider.isRecording)
+                                  Lottie.asset('assets/mic.json',
+                                      height: 60, width: 60),
+                              ],
                             ),
                           ),
                         ),
